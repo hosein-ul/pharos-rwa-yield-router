@@ -1,0 +1,57 @@
+{
+  "_note": "Protocol addresses marked PLACEHOLDER must be filled from the Pharos Discord #deployed-contracts channel or official protocol docs before use. Chainlink oracles are live and confirmed.",
+  "atlantic-testnet": {
+    "elfi": {
+      "name": "ELFi Protocol",
+      "docs": "https://docs.elfi.xyz",
+      "type": "aave_v3_fork",
+      "pools": {
+        "lending_pool": "PLACEHOLDER_ELFI_POOL",
+        "usdc_reserve": "PLACEHOLDER_ELFI_USDC_RESERVE"
+      },
+      "_note": "Fill from Pharos Discord #deployed-contracts or https://docs.elfi.xyz/deployments"
+    },
+    "morpho": {
+      "name": "Morpho",
+      "docs": "https://docs.morpho.org",
+      "type": "erc4626",
+      "vaults": {
+        "usdc_vault": "PLACEHOLDER_MORPHO_USDC_VAULT"
+      },
+      "_note": "Fill from https://docs.morpho.org/deployments or Pharos Discord"
+    },
+    "faroo": {
+      "name": "Faroo Liquid Staking",
+      "docs": "https://faroo.xyz",
+      "type": "liquid_staking",
+      "contracts": {
+        "staking": "PLACEHOLDER_FAROO_STAKING",
+        "st_token": "PLACEHOLDER_FAROO_STPHRS"
+      },
+      "_note": "Fill from Faroo official docs or Pharos Discord"
+    }
+  },
+  "mainnet": {
+    "elfi": {
+      "name": "ELFi Protocol",
+      "type": "aave_v3_fork",
+      "pools": {
+        "lending_pool": "PLACEHOLDER_ELFI_POOL_MAINNET"
+      }
+    },
+    "morpho": {
+      "name": "Morpho",
+      "type": "erc4626",
+      "vaults": {
+        "usdc_vault": "PLACEHOLDER_MORPHO_USDC_VAULT_MAINNET"
+      }
+    },
+    "faroo": {
+      "name": "Faroo Liquid Staking",
+      "type": "liquid_staking",
+      "contracts": {
+        "staking": "PLACEHOLDER_FAROO_STAKING_MAINNET"
+      }
+    }
+  }
+}

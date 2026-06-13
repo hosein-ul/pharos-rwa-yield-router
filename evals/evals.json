@@ -1,0 +1,51 @@
+{
+  "skill_name": "pharos-rwa-yield-router",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have 5,000 USDC sitting idle. I'm on Pharos testnet. Where should I put it for the best yield? I'm moderately risk tolerant and might need access in 30 days.",
+      "expected_output": "Ranked yield table with protocols, APY, risk-adjusted APY, TVL, min deposit. Top recommendation with projected 30-day return. Protocols with placeholder addresses clearly noted.",
+      "assertions": [
+        "Shows at least 1 protocol with data (or explains why all are unavailable)",
+        "Risk-adjusted APY is different from nominal APY and lower",
+        "Makes a specific recommendation with reasoning",
+        "Shows projected 30-day return for $5000",
+        "Block number is shown for data freshness",
+        "Protocols with PLACEHOLDER addresses are noted as unavailable rather than skipped silently"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "What is the current PROS price in USD on Pharos testnet? And what's the ETH price?",
+      "expected_output": "PROS/USD and ETH/USD prices from Chainlink oracles, with block number for freshness",
+      "assertions": [
+        "PROS/USD price is fetched from Chainlink oracle at 0x67488Fac9Bc4174a53a485b11F2066498Cd34b3A",
+        "ETH/USD price is fetched from Chainlink oracle at 0xCd47D1843f3D6313836303fE1434BA26D257d500",
+        "Prices are shown in USD with 2 decimal places",
+        "Block number or timestamp is shown"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Show me only the safest yield on Pharos. I only want government or investment-grade backed assets. I have 10,000 USDC.",
+      "expected_output": "Filtered results showing only government_treasury or investment_grade protocols. Crypto lending and native staking excluded. Clear note about risk filter applied.",
+      "assertions": [
+        "Only conservative asset classes are shown (government_treasury, investment_grade)",
+        "native_staking and crypto_lending are excluded from results",
+        "Risk filter is explicitly mentioned in the output",
+        "Projected 365-day return for $10,000 is calculated if APY is available"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Compare the yield options on Pharos for someone with 100 PHRS who wants to stake or earn passive income. What's the current PHRS/PROS price?",
+      "expected_output": "Faroo staking info, PROS/USD price from Chainlink, estimated value of 100 PHRS in USD, projected staking return",
+      "assertions": [
+        "Faroo staking is mentioned (even if address is placeholder)",
+        "PROS/USD price is fetched from Chainlink and shown",
+        "USD equivalent of 100 PHRS is calculated",
+        "Risk class for native staking (0.50 multiplier) is explained"
+      ]
+    }
+  ]
+}
