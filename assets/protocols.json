@@ -1,84 +1,66 @@
 {
-  "_note": "Addresses verified via eth_getCode on Atlantic testnet (chain 688689). DEPLOYED = contract confirmed live. PLACEHOLDER = not yet found/deployed on this network.",
+  "_verified_date": "2026-06-13",
+  "_method": "eth_getCode via Atlantic testnet RPC (https://atlantic.dplabs-internal.com)",
   "atlantic-testnet": {
     "faroo": {
       "name": "Faroo Liquid Staking",
       "docs": "https://faroo.xyz",
       "type": "erc4626_liquid_staking",
+      "asset": "PHRS",
+      "asset_class": "native_staking",
+      "risk_multiplier": 0.50,
       "status": "DEPLOYED",
-      "_verified": "eth_getCode returned 2739 bytes",
+      "_verified": "eth_getCode = 2739 bytes at 0xc9A0B63d91c2A808dD631d031f037944fedDaA12",
       "contracts": {
-        "staking": "0xc9A0B63d91c2A808dD631d031f037944fedDaA12",
-        "st_token": "0xc9A0B63d91c2A808dD631d031f037944fedDaA12"
+        "staking": "0xc9A0B63d91c2A808dD631d031f037944fedDaA12"
       },
-      "_note": "Contract responds to totalAssets(), totalSupply(), decimals()=18. stPROS/stPHRS token. Read APY via totalAssets snapshot diff or rewardRate.",
       "abi_hints": {
-        "totalAssets": "0x01e1d114",
-        "totalSupply": "0x18160ddd",
-        "decimals": "0x313ce567",
-        "symbol": "0x95d89b41"
-      }
+        "totalAssets()": "0x01e1d114",
+        "totalSupply()": "0x18160ddd",
+        "decimals()":    "0x313ce567",
+        "symbol()":      "0x95d89b41"
+      },
+      "_note": "ERC-4626 style. Responds to totalAssets(), totalSupply(), decimals()=18. APY requires two totalAssets() snapshots separated by time (see yield-scan.md#faroo-apy)."
     },
     "morpho": {
       "name": "Morpho",
       "docs": "https://docs.morpho.org",
       "type": "erc4626",
-      "status": "NOT_DEPLOYED_ON_TESTNET",
-      "_verified": "eth_getCode returned 0x for all Morpho addresses on chain 688689",
-      "_note": "Morpho lists 'Pharos' as supported on their docs — this likely refers to Pacific Mainnet (chain 1672), NOT Atlantic testnet. Check Pharos Discord for testnet vault addresses or use mainnet.",
+      "status": "NOT_DEPLOYED",
+      "_verified": "eth_getCode = 0x for all Morpho deterministic addresses on chain 688689",
+      "_note": "Morpho UI lists Pharos as a 'supported' chain, but their API (blue-api.morpho.org) returns 'unsupported chainId 688689'. Neither Morpho Blue (0xBBBB...Cb) nor VaultV2Factory are deployed on Atlantic testnet. Likely planned for mainnet. Get active vault addresses from https://app.morpho.org once live.",
       "contracts": {
-        "morpho_blue": "PLACEHOLDER_NOT_ON_TESTNET",
-        "vault_v2_factory": "PLACEHOLDER_NOT_ON_TESTNET",
-        "registry": "PLACEHOLDER_NOT_ON_TESTNET",
-        "irm": "PLACEHOLDER_NOT_ON_TESTNET"
-      },
-      "mainnet_addresses": {
-        "_note": "These are Morpho's deterministic addresses — same on all supported chains including Pharos mainnet (chain 1672)",
-        "morpho_blue": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
-        "vault_v2_factory": "0xA1D94F746dEfa1928926b84fB2596c06926C0405",
-        "registry": "0x3696c5eAe4a7Ffd04Ea163564571E9CD8Ed9364e",
-        "irm": "0x870aC11D48B15DB9a138Cf899d20F13F79Ba00BC",
-        "bundler3": "0x6566194141eefa99Af43Bb5Aa71460Ca2Dc90245"
+        "morpho_blue":     "NOT_DEPLOYED_ON_TESTNET",
+        "vault_v2_factory":"NOT_DEPLOYED_ON_TESTNET"
       }
     },
     "elfi": {
       "name": "ELFi Protocol",
       "docs": "https://docs.elfi.xyz",
-      "type": "aave_v3_fork",
-      "status": "UNKNOWN",
-      "_note": "Address not yet confirmed. Get from Pharos Discord #deployed-contracts or https://docs.elfi.xyz/deployments",
-      "contracts": {
-        "lending_pool": "PLACEHOLDER_ELFI_POOL"
-      }
+      "type": "derivatives_dex",
+      "status": "NOT_ON_PHAROS",
+      "_verified": "ELFi deploys only on Arbitrum (0x153c...55) and Base (0x957e...50). Both NOT DEPLOYED on Pharos testnet.",
+      "_note": "ELFi is a decentralized derivatives trading platform, NOT an RWA lending protocol. It does not appear to have Pharos deployment. Remove from yield-router or replace with an actual Pharos RWA protocol once one is found.",
+      "contracts": {}
     }
   },
   "mainnet": {
     "morpho": {
       "name": "Morpho",
-      "status": "LIKELY_DEPLOYED",
-      "_note": "Morpho docs list Pharos mainnet as supported. Deterministic addresses apply.",
+      "status": "UNVERIFIED",
+      "_note": "Morpho docs list Pharos among supported chains, but chain 1672 is absent from their API. Verify with eth_getCode on https://rpc.pharos.xyz before use.",
       "contracts": {
-        "morpho_blue": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
-        "vault_v2_factory": "0xA1D94F746dEfa1928926b84fB2596c06926C0405",
-        "registry": "0x3696c5eAe4a7Ffd04Ea163564571E9CD8Ed9364e",
-        "irm": "0x870aC11D48B15DB9a138Cf899d20F13F79Ba00BC",
-        "bundler3": "0x6566194141eefa99Af43Bb5Aa71460Ca2Dc90245"
+        "morpho_blue":     "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
+        "vault_v2_factory":"0xA1D94F746dEfa1928926b84fB2596c06926C0405",
+        "irm":             "0x870aC11D48B15DB9a138Cf899d20F13F79Ba00BC",
+        "bundler3":        "0x6566194141eefa99Af43Bb5Aa71460Ca2Dc90245"
       }
     },
     "faroo": {
       "name": "Faroo Liquid Staking",
       "status": "UNKNOWN",
-      "_note": "Faroo staking address on mainnet not yet confirmed. Address above is Atlantic testnet only.",
-      "contracts": {
-        "staking": "PLACEHOLDER_FAROO_MAINNET"
-      }
-    },
-    "elfi": {
-      "name": "ELFi Protocol",
-      "status": "UNKNOWN",
-      "contracts": {
-        "lending_pool": "PLACEHOLDER_ELFI_MAINNET"
-      }
+      "_note": "Testnet address 0xc9A0B63d91c2A808dD631d031f037944fedDaA12 is Atlantic testnet only. Mainnet address not confirmed.",
+      "contracts": {}
     }
   }
 }
