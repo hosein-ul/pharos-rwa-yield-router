@@ -1,56 +1,83 @@
 {
-  "_note": "Protocol addresses marked PLACEHOLDER must be filled from the Pharos Discord #deployed-contracts channel or official protocol docs before use. Chainlink oracles are live and confirmed.",
+  "_note": "Addresses verified via eth_getCode on Atlantic testnet (chain 688689). DEPLOYED = contract confirmed live. PLACEHOLDER = not yet found/deployed on this network.",
   "atlantic-testnet": {
-    "elfi": {
-      "name": "ELFi Protocol",
-      "docs": "https://docs.elfi.xyz",
-      "type": "aave_v3_fork",
-      "pools": {
-        "lending_pool": "PLACEHOLDER_ELFI_POOL",
-        "usdc_reserve": "PLACEHOLDER_ELFI_USDC_RESERVE"
+    "faroo": {
+      "name": "Faroo Liquid Staking",
+      "docs": "https://faroo.xyz",
+      "type": "erc4626_liquid_staking",
+      "status": "DEPLOYED",
+      "_verified": "eth_getCode returned 2739 bytes",
+      "contracts": {
+        "staking": "0xc9A0B63d91c2A808dD631d031f037944fedDaA12",
+        "st_token": "0xc9A0B63d91c2A808dD631d031f037944fedDaA12"
       },
-      "_note": "Fill from Pharos Discord #deployed-contracts or https://docs.elfi.xyz/deployments"
+      "_note": "Contract responds to totalAssets(), totalSupply(), decimals()=18. stPROS/stPHRS token. Read APY via totalAssets snapshot diff or rewardRate.",
+      "abi_hints": {
+        "totalAssets": "0x01e1d114",
+        "totalSupply": "0x18160ddd",
+        "decimals": "0x313ce567",
+        "symbol": "0x95d89b41"
+      }
     },
     "morpho": {
       "name": "Morpho",
       "docs": "https://docs.morpho.org",
       "type": "erc4626",
-      "vaults": {
-        "usdc_vault": "PLACEHOLDER_MORPHO_USDC_VAULT"
-      },
-      "_note": "Fill from https://docs.morpho.org/deployments or Pharos Discord"
-    },
-    "faroo": {
-      "name": "Faroo Liquid Staking",
-      "docs": "https://faroo.xyz",
-      "type": "liquid_staking",
+      "status": "NOT_DEPLOYED_ON_TESTNET",
+      "_verified": "eth_getCode returned 0x for all Morpho addresses on chain 688689",
+      "_note": "Morpho lists 'Pharos' as supported on their docs — this likely refers to Pacific Mainnet (chain 1672), NOT Atlantic testnet. Check Pharos Discord for testnet vault addresses or use mainnet.",
       "contracts": {
-        "staking": "PLACEHOLDER_FAROO_STAKING",
-        "st_token": "PLACEHOLDER_FAROO_STPHRS"
+        "morpho_blue": "PLACEHOLDER_NOT_ON_TESTNET",
+        "vault_v2_factory": "PLACEHOLDER_NOT_ON_TESTNET",
+        "registry": "PLACEHOLDER_NOT_ON_TESTNET",
+        "irm": "PLACEHOLDER_NOT_ON_TESTNET"
       },
-      "_note": "Fill from Faroo official docs or Pharos Discord"
+      "mainnet_addresses": {
+        "_note": "These are Morpho's deterministic addresses — same on all supported chains including Pharos mainnet (chain 1672)",
+        "morpho_blue": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
+        "vault_v2_factory": "0xA1D94F746dEfa1928926b84fB2596c06926C0405",
+        "registry": "0x3696c5eAe4a7Ffd04Ea163564571E9CD8Ed9364e",
+        "irm": "0x870aC11D48B15DB9a138Cf899d20F13F79Ba00BC",
+        "bundler3": "0x6566194141eefa99Af43Bb5Aa71460Ca2Dc90245"
+      }
+    },
+    "elfi": {
+      "name": "ELFi Protocol",
+      "docs": "https://docs.elfi.xyz",
+      "type": "aave_v3_fork",
+      "status": "UNKNOWN",
+      "_note": "Address not yet confirmed. Get from Pharos Discord #deployed-contracts or https://docs.elfi.xyz/deployments",
+      "contracts": {
+        "lending_pool": "PLACEHOLDER_ELFI_POOL"
+      }
     }
   },
   "mainnet": {
-    "elfi": {
-      "name": "ELFi Protocol",
-      "type": "aave_v3_fork",
-      "pools": {
-        "lending_pool": "PLACEHOLDER_ELFI_POOL_MAINNET"
-      }
-    },
     "morpho": {
       "name": "Morpho",
-      "type": "erc4626",
-      "vaults": {
-        "usdc_vault": "PLACEHOLDER_MORPHO_USDC_VAULT_MAINNET"
+      "status": "LIKELY_DEPLOYED",
+      "_note": "Morpho docs list Pharos mainnet as supported. Deterministic addresses apply.",
+      "contracts": {
+        "morpho_blue": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
+        "vault_v2_factory": "0xA1D94F746dEfa1928926b84fB2596c06926C0405",
+        "registry": "0x3696c5eAe4a7Ffd04Ea163564571E9CD8Ed9364e",
+        "irm": "0x870aC11D48B15DB9a138Cf899d20F13F79Ba00BC",
+        "bundler3": "0x6566194141eefa99Af43Bb5Aa71460Ca2Dc90245"
       }
     },
     "faroo": {
       "name": "Faroo Liquid Staking",
-      "type": "liquid_staking",
+      "status": "UNKNOWN",
+      "_note": "Faroo staking address on mainnet not yet confirmed. Address above is Atlantic testnet only.",
       "contracts": {
-        "staking": "PLACEHOLDER_FAROO_STAKING_MAINNET"
+        "staking": "PLACEHOLDER_FAROO_MAINNET"
+      }
+    },
+    "elfi": {
+      "name": "ELFi Protocol",
+      "status": "UNKNOWN",
+      "contracts": {
+        "lending_pool": "PLACEHOLDER_ELFI_MAINNET"
       }
     }
   }
