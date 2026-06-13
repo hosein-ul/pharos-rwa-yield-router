@@ -1,0 +1,593 @@
+{
+  "_meta": {
+    "source": "https://port.pharos.xyz/ecosystem",
+    "lastUpdated": "2026-06-06",
+    "note": "Protocol names/descriptions are from the official Pharos Port ecosystem directory. Network params (chainId 1672, native token PROS) verified via ChainList (chainlist.org/chain/1672) and the official Pharos account. Contract addresses were verified from each protocol's LIVE app config / official docs/registry AND confirmed on-chain via eth_getCode against rpc.pharos.xyz (a non-0x result proves bytecode on mainnet). IMPORTANT: a protocol being listed in the ecosystem directory does NOT by itself prove a live mainnet contract — deploymentStatus reflects what could actually be verified. riskLevel values are category heuristics, NOT audit/TVL claims.",
+    "deploymentStatusLegend": {
+      "mainnet-verified": "Contract(s) confirmed deployed on Pharos mainnet (chainId 1672) via on-chain eth_getCode.",
+      "address-unverified": "Project appears live / is listed as active on mainnet, but no contract address could be verified on-chain (app offline, no published address, or address not exposed). Likely usable, but confirm the contract before routing capital.",
+      "testnet-only": "Verified deployed on a Pharos testnet only; mainnet contract map is empty / shows 'coming soon'. Do NOT route mainnet capital here yet.",
+      "not-on-pharos": "The protocol's own docs/app indicate it operates on other chains and not Pharos (mainnet contract not found / known address returns 0x).",
+      "announced": "Partnership/integration announced but no Pharos deployment evidence yet."
+    },
+    "addressUsageRule": "Only present an address as a live mainnet venue if its deploymentStatus is 'mainnet-verified'. For testnet-only / announced / not-on-pharos protocols, you MUST flag the status and not imply a live mainnet deployment."
+  },
+  "network": {
+    "name": "Pharos",
+    "chainId": 1672,
+    "nativeToken": "PROS",
+    "wrappedNative": "WPROS",
+    "rpc": "https://rpc.pharos.xyz",
+    "explorer": "https://www.pharosscan.xyz",
+    "positioning": "Inclusive Financial Layer 1 for RealFi. Modular parallel L1 with dual VM (EVM + WASM), deep-parallel execution, sub-second finality, built-in compliance, and cross-chain interoperability."
+  },
+  "tokens": {
+    "native": {
+      "symbol": "PROS",
+      "name": "Pharos",
+      "decimals": 18,
+      "note": "Native gas coin — no ERC-20 contract."
+    },
+    "wrappedNative": {
+      "symbol": "WPROS",
+      "name": "Wrapped Pharos",
+      "decimals": 18,
+      "address": "0x52C48d4213107b20bC583832b0d951FB9CA8F0B0",
+      "deploymentStatus": "mainnet-verified",
+      "source": "https://docs.chain.link/ccip/directory/mainnet/token/WPROS"
+    },
+    "stablecoins": [
+      {
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "decimals": 6,
+        "issuer": "Circle",
+        "address": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "testnetAddress": "0xcfC8330f4BCAB529c625D12781b1C19466A9Fc8B",
+        "deploymentStatus": "mainnet-verified",
+        "source": "https://developers.circle.com/stablecoins/usdc-contract-addresses",
+        "bridgeable": true,
+        "bridgeMethod": "CCTP V2"
+      }
+    ]
+  },
+  "protocols": {
+    "dex": [
+      {
+        "name": "Faroswap",
+        "type": "AMM",
+        "tags": ["DEX"],
+        "description": "Pharos-native DEX fueling RWA-Fi with precision and depth. Primary venue for swaps and liquidity provision.",
+        "riskLevel": "medium",
+        "deploymentStatus": "mainnet-verified",
+        "deploymentNote": "Confirmed live on Pharos mainnet via the production app (faroswap.xyz, chainId 1672) and the DODO route-service API; addresses below return bytecode on-chain. (The public docs page still shows only a testnet table, which is stale — the live app is mainnet.) DODO-fork DEX; pools come from DVM/DSP/DPP factories.",
+        "docs": "https://docs.faroswap.xyz",
+        "contractsSource": "https://faroswap.xyz/swap (live app bundle) + DODO route-service api.dodoex.io chainId=1672",
+        "contracts": [
+          { "name": "Router (DODO route proxy)", "address": "0xA5cA5Fbe34e444F366B373170541ec6902b0F75c" },
+          { "name": "DODOApprove proxy", "address": "0xBF105f4ffBD3825f5433d074008B9A76237d849c" },
+          { "name": "Multicall", "address": "0xc3A335d1C83f9b92E36C0323c58809d19c9DB63C" }
+        ],
+        "features": ["swap", "liquidity provision", "LP tokens"],
+        "riskNotes": "Standard AMM risks: impermanent loss, slippage, smart contract risk.",
+        "strategyRole": "Primary mainnet DEX for swaps (e.g. USDC -> PROS for gas) and LP positions."
+      },
+      {
+        "name": "Agra",
+        "type": "credit-exchange",
+        "tags": ["DEX"],
+        "description": "Exchange for onchain credit, built for trading and financing tokenized credit (trades Pharos-originated pALPHA consumer credit).",
+        "riskLevel": "medium",
+        "deploymentStatus": "mainnet-verified",
+        "deploymentNote": "The live app (bonds.agra.gg) embeds a Pharos mainnet config (chainId 1672, defineChain with rpc.pharos.xyz) and a Seaport-based settlement deployment. (Earlier press described Agra as Ethereum-only — that is now outdated.) Settlement token is Pharos USDC.",
+        "app": "https://bonds.agra.gg/",
+        "contractsSource": "https://bonds.agra.gg (live app bundle, chainId 1672)",
+        "contracts": [
+          { "name": "Seaport (exchange settlement)", "address": "0x00000000004159d5b83cEc7494917733F08a7629" },
+          { "name": "Seaport Zone", "address": "0x0030209C0fc3dC6aCd6f5996b10a1e1730E2E40a" }
+        ],
+        "features": ["tokenized credit trading", "credit financing"],
+        "riskNotes": "Credit/counterparty risk on underlying instruments, liquidity risk, smart contract risk.",
+        "strategyRole": "Venue for RealFi/credit exposure (tokenized credit) on Pharos mainnet."
+      },
+      {
+        "name": "Bitverse",
+        "type": "rwa-perp-dex",
+        "tags": ["DEX", "Perp", "RWA"],
+        "description": "All-in-one RWA perp DEX bringing real-world assets and U.S. stock futures onto a single AI-powered trading platform on Pharos. USDC margin.",
+        "riskLevel": "high",
+        "deploymentStatus": "mainnet-verified",
+        "contractsSource": "https://app.bitverse.zone",
+        "contractsNote": "Full Pharos-mainnet contract suite is on-chain verified — see protocols.perps[Bitverse] for the complete list. The collateral/deposit entry point is below.",
+        "contracts": [
+          { "name": "Account / collateral (deposit entry point)", "address": "0xD0A8A3b69cA7C58d04d98b4Ba1395a1f95c69D2e" }
+        ],
+        "docs": "https://wiki.bitverse.zone/en",
+        "features": ["perpetual futures", "RWA trading", "US stock futures", "leverage", "spot AMM"],
+        "riskNotes": "Leverage/liquidation risk, funding-rate risk, oracle risk, high volatility.",
+        "strategyRole": "Growth-allocation venue for aggressive strategies. Not for stable/treasury capital."
+      }
+    ],
+    "perps": [
+      {
+        "name": "Bitverse",
+        "type": "perp-dex",
+        "tags": ["Perp", "RWA"],
+        "description": "RWA perpetual DEX with U.S. stock futures (NVDA, TSLA, CRCL...), crypto perps and an AI-powered, order-book trading engine plus a Uniswap-v4-style spot AMM. Margin in USDC.",
+        "riskLevel": "high",
+        "deploymentStatus": "mainnet-verified",
+        "contractsSource": "https://app.bitverse.zone — API /bitverse/trade-data/v1/account/balance/contractAddressList with headers CHAIN-ID:1672, TENANT-ID:PHAROSMAINNET",
+        "contractsNote": "Full contract suite read from the live app's Pharos-mainnet config and each address on-chain confirmed via eth_getCode on rpc.pharos.xyz (chainId 1672, bytecode present). The account contract (0xD0A8...9D2e) is the collateral/deposit entry point and also serves as the cross-chain bridge target on BSC/Polygon/Arbitrum/Merlin/OKX. The fee-recipient spotSwapFee address (0xafb7...556b) is an EOA with no bytecode and is intentionally omitted.",
+        "contracts": [
+          { "name": "Account / collateral (deposit entry point)", "address": "0xD0A8A3b69cA7C58d04d98b4Ba1395a1f95c69D2e" },
+          { "name": "Order", "address": "0x8d4251DC06f0bAf67A1E9AC092678a0ABDc7785F" },
+          { "name": "OrderLimit", "address": "0x8923990047489695a511bfbe017Ac29C49D7dD2c" },
+          { "name": "OrderExecutor", "address": "0x0ED7F1994907EC81E0522141cb33947A8E78E024" },
+          { "name": "OrderBook", "address": "0x321a2a8Fd3ceeFB256880a9df3298724E47790b9" },
+          { "name": "Position", "address": "0x694f38265c6881e6043e9ffd21ef9D55599bD4d8" },
+          { "name": "PositionHandle", "address": "0xA69866Ce311a4aBf83cB23b21f8D033A7D0141b0" },
+          { "name": "PositionAdmin", "address": "0xd52D3f3e8292001F287bd544022B85d6aec1f0A3" },
+          { "name": "PositionBook", "address": "0xe85d7E3BA1EA01d86B9e9C2626DF3bF83E5BA9F7" },
+          { "name": "MarketRegistry", "address": "0x450692f4c149b97D14Fa4d7eA97DA6ba03130387" },
+          { "name": "LiquidityManager", "address": "0xcA37B21c20F2FAcbFb6C32e4429d0f8433B88cF8" },
+          { "name": "LiquidityConfig", "address": "0xCeB0A4E68B8421dfFDc2e36589965cd4C4fc6616" },
+          { "name": "OracleSwap", "address": "0xC06646dDB704d480BBfDFb8489e063aE3feA9C9D" },
+          { "name": "OraclePool", "address": "0x050D9Ee146296CF80D23Dea5FCF3F698dd1829ca" },
+          { "name": "Spot AMM PoolManager", "address": "0xD681e96AD464f8F7F7fa7e1E0c5a367175E44550" },
+          { "name": "Spot AMM PositionManager", "address": "0x38CDC4049917A533dB44D9255dFd392b385e954C" },
+          { "name": "Spot AMM UniversalRouter", "address": "0x6965f9eFB3d24203A2967470720f1E314fE9E2a7" },
+          { "name": "Spot AMM Quoter", "address": "0xB54Be01aD8c75a392bD7a4cE276717D4b437Ff06" },
+          { "name": "Spot AMM StateView", "address": "0x616434e941c5E53d44894bF9ca13D517927BF8aF" },
+          { "name": "Spot AMM Permit2", "address": "0xBE09AD809eE1f1c696a2EA2E9e2F07FAc4013a85" },
+          { "name": "SpotVault", "address": "0x5a3cEa451081fE567Cfbb089a6c8d40A158Ee721" },
+          { "name": "SpotValue", "address": "0x7C5D5F132dF70e8bABa500dCA18C3a4FFD67Be05" }
+        ],
+        "features": ["perpetual futures", "US stock futures", "leverage", "RWA derivatives", "spot AMM"],
+        "riskNotes": "Leverage and liquidation risk; only the growth bucket of aggressive profiles, with strict position sizing.",
+        "strategyRole": "Directional / hedging leg in aggressive strategies. Never use stable-reserve or treasury capital here."
+      }
+    ],
+    "lending": [
+      {
+        "name": "Morpho",
+        "type": "lending",
+        "tags": ["Lending"],
+        "description": "Lending protocol combining Compound/Aave-style pools with peer-to-peer matching for improved rates.",
+        "riskLevel": "low-medium",
+        "deploymentStatus": "mainnet-verified",
+        "contractsSource": "https://docs.morpho.org/get-started/resources/addresses/",
+        "contractsNote": "Pharos uses a DISTINCT core address; the canonical cross-chain Morpho address (0xBBBB...FFCb) is NOT deployed on Pharos.",
+        "contracts": [
+          { "name": "Morpho (Blue core)", "address": "0x18573fA18fd17dDfD790B4a5B5b2977aad3b4Efb" },
+          { "name": "AdaptiveCurveIRM", "address": "0xD5E02889C13230458506CC842347c4E62F8cDF3a" },
+          { "name": "ChainlinkOracleV2Factory", "address": "0xb8118256d8Aa950ec0B26a0b8Be7C6c1a858f6a3" },
+          { "name": "VaultV2Factory", "address": "0x8E01ed1E1A41029b3137FcE9Aa880c0A54827498" },
+          { "name": "MorphoRegistry", "address": "0xbe858d729548eB49BbFA05Acd3674ca8cdaAdD4b" },
+          { "name": "Bundler3", "address": "0x3c90c09F8c5d927a117F681fB924952DbbD99120" },
+          { "name": "GeneralAdapter1", "address": "0x0A5819708bCAD9C716dFD58ecB58cF91399A53f8" }
+        ],
+        "features": ["supply", "borrow", "P2P matching", "vaults"],
+        "riskNotes": "Smart contract risk, liquidation risk on borrowed positions, oracle risk.",
+        "strategyRole": "Core conservative-yield venue: supply stablecoins to earn interest. Preferred over LP for treasury yield buckets."
+      },
+      {
+        "name": "OKU",
+        "type": "defi-aggregator",
+        "tags": ["Lending"],
+        "description": "Premier DeFi aggregator (35+ chains) offering swap and bridge routing.",
+        "riskLevel": "low-medium",
+        "deploymentStatus": "not-on-pharos",
+        "deploymentNote": "Pharos is not listed on Oku's official deployed-contracts page as of 2026-06-05.",
+        "docs": "https://docs.oku.trade/home/extra-information/deployed-contracts",
+        "features": ["swap aggregation", "bridge aggregation"],
+        "riskNotes": "Routing/integration risk; verify the underlying venue each route lands on.",
+        "strategyRole": "Potential best-execution router — not yet on Pharos; do not route here until deployed."
+      },
+      {
+        "name": "Faroo",
+        "type": "liquid-staking-lending",
+        "tags": ["Lending", "Liquid Staking", "RWA"],
+        "description": "Liquid staking (stPROS) and RWA yields for Pharos; built on Bifrost SLPx.",
+        "riskLevel": "low-medium",
+        "deploymentStatus": "testnet-only",
+        "deploymentNote": "Re-verified 2026-06-06 by reading the live app bundle: the mainnet contract map is literally `1672:{}` (empty) and the staking UI renders 'Coming Soon'. stPROS is deployed only on Pharos Atlantic Testnet (688689) at 0xc9A0B63d91c2A808dD631d031f037944fedDaA12 (returns 0x on mainnet). Mainnet staking is NOT live yet.",
+        "app": "https://app.faroo.xyz",
+        "features": ["liquid staking", "RWA yield"],
+        "riskNotes": "Smart contract risk, peg-deviation risk on the LST.",
+        "strategyRole": "Capital-efficient PROS staking once live on mainnet; flag testnet status until then."
+      }
+    ],
+    "yieldFarming": [
+      {
+        "name": "TermMax",
+        "type": "fixed-rate-lending",
+        "tags": ["Yield Farming"],
+        "description": "Fixed-rate digital asset lending and borrowing platform (Term Structure).",
+        "riskLevel": "low-medium",
+        "deploymentStatus": "mainnet-verified",
+        "contractsSource": "https://github.com/term-structure/termmax-contract-v2/blob/main/deployments/pharos-mainnet/pharos-mainnet-core-v2.json",
+        "contracts": [
+          { "name": "FactoryV2", "address": "0xEDC206E67eAc5C949c0a90A02E29B4b2791c8395" },
+          { "name": "VaultFactoryV2", "address": "0x5316b0d2Ee13C81E243226D6BB93CF29FBf95837" },
+          { "name": "OracleAggregatorV2", "address": "0x490df22f542e778fAfAB441beB19d358bE048A20" },
+          { "name": "RouterV2", "address": "0xc56cF74254C5aDd64fa1198476233BEC1878145B" },
+          { "name": "MarketViewer", "address": "0x57400bc0486b174972909D05A4097B7067ab761F" },
+          { "name": "AccessManager", "address": "0x9498764f0c62257B83A04e2A757De30908EC793d" }
+        ],
+        "features": ["fixed-rate lending", "fixed-rate borrowing", "predictable yield"],
+        "riskNotes": "Smart contract risk, term/duration risk, early-exit liquidity risk.",
+        "strategyRole": "Predictable fixed-rate yield for conservative and treasury strategies valuing rate certainty."
+      }
+    ],
+    "realfi": [
+      {
+        "name": "AquaFlux",
+        "type": "rwa-structured-yield",
+        "tags": ["RWA"],
+        "description": "Unlocks RWA yield and liquidity with a tri-token model (yield / principal / collateral tokens) plus a built-in Uniswap-v4-style AMM.",
+        "riskLevel": "low-medium",
+        "deploymentStatus": "mainnet-verified",
+        "contractsSource": "https://docs.aquaflux.pro/developers/contracts.md",
+        "contracts": [
+          { "name": "AquaFluxCore (proxy)", "address": "0x0da98a8447b6B4aDD9733011A812922954d3e127" },
+          { "name": "TokenFactory", "address": "0x1C041b61A6Cf43881Be7E9394bb198B472Ae17A2" },
+          { "name": "AquaFluxTimelock", "address": "0x766b19dF7BBCcab411af91Fe9aBB7940F4A47C7C" },
+          { "name": "PoolManager (AMM)", "address": "0x2A927B9080f95259430735360a97f7C0144276dd" },
+          { "name": "SwapRouter (AMM)", "address": "0x94eb66E69B158eD58Edf2d4150638920205e3C88" },
+          { "name": "UniversalRouter (AMM)", "address": "0x9a081cC8086728F15b198C65D85130733972E956" }
+        ],
+        "features": ["structured RWA yield", "tri-token risk tranching", "built-in AMM"],
+        "riskNotes": "Tranche/structure risk, oracle risk, underlying-asset risk, smart contract risk.",
+        "strategyRole": "Tranched RWA yield: pick a risk/return token to match the strategy's profile. Its AMM is a verified mainnet swap venue."
+      },
+      {
+        "name": "Zona",
+        "type": "rwa-liquidity",
+        "tags": ["RWA"],
+        "description": "Deposit RWAs and unlock idle liquidity. ZonaLend is an Aave-V3-style lending market on Pharos.",
+        "riskLevel": "low-medium",
+        "deploymentStatus": "mainnet-verified",
+        "contractsSource": "https://app.zona.finance/lend",
+        "contractsNote": "Addresses from the live app deployment config (pharosChainId 1672), on-chain confirmed. Architecture is an Aave V3 fork.",
+        "contracts": [
+          { "name": "Pool (proxy)", "address": "0xda464e68208A3083Eb65FE5c522a72AeD1C1372a" },
+          { "name": "AaveOracle", "address": "0x6bEDfCa244f29dD916fe7c50e1469C6188B873f9" },
+          { "name": "PoolDataProvider", "address": "0xA91424C666193C2b2fb684E25dEadf03B333f49A" },
+          { "name": "WrappedTokenGateway (WPROS)", "address": "0xB6e6826Ad767f2323D2FA7aF6144B6DFDf096C9f" }
+        ],
+        "features": ["RWA collateral", "lending/borrowing", "liquidity unlock"],
+        "riskNotes": "Collateral valuation risk, liquidation risk, regulatory and oracle risk.",
+        "strategyRole": "Unlock liquidity against RWA/collateral without selling; capital-efficiency leg for RealFi strategies."
+      },
+      {
+        "name": "R25",
+        "type": "rwa-tokenization",
+        "tags": ["RWA"],
+        "description": "RWA infrastructure for tokenized real-asset yield (rcTokens). Hosts third-party 'Axil Consumer Credit Vaults' on Pharos: USDC-deposit vaults with economic exposure to diversified emerging-market consumer credit, curated by Axil, audited by SlowMist & BlockSec.",
+        "riskLevel": "low-medium",
+        "deploymentStatus": "mainnet-verified",
+        "contractsSource": "https://app.r25.xyz/vaults",
+        "contractsNote": "Vault receipt-token addresses read from the live R25 app (Blockchain: Pharos), each on-chain confirmed via eth_getCode on rpc.pharos.xyz (chainId 1672, bytecode present). USDC settlement, 1 USDC min deposit, 0% fees, instant minting. R25 also runs vaults on Polygon and Sui — those addresses are NOT Pharos; only the two below are.",
+        "contracts": [
+          { "name": "VRPCW (Axil Consumer Credit Vault - 7D, 7-day lock-up)", "address": "0x1c2bc8b553d9a7e61f7531a3a4bf2162f4569268" },
+          { "name": "VRPCS (Axil Consumer Credit Vault - 6-month)", "address": "0xee26bb0989691735c997dfdc49a4a607f75e190b" }
+        ],
+        "features": ["tokenized consumer credit", "emerging-market lending", "USDC-denominated RWA yield"],
+        "riskNotes": "Regulatory risk, oracle/IoT-data risk, underlying-asset risk, liquidity/lock-up risk (7-day or 6-month). Vaults are curated by third-party risk curators (Axil); R25 provides infrastructure only.",
+        "strategyRole": "Real-asset yield with low crypto correlation, USDC-denominated. Pick the 7-day vault for flexibility or the 6-month vault for term yield."
+      },
+      {
+        "name": "Asseto",
+        "type": "rwa-platform",
+        "tags": ["RWA"],
+        "description": "Tokenized fintech RWA platform; cross-chain RWA liquidity partnership with Pharos.",
+        "riskLevel": "low-medium",
+        "deploymentStatus": "announced",
+        "deploymentNote": "Products announced to move to Pharos around mainnet launch; no on-chain Pharos deployment verified.",
+        "features": ["tokenized equity/fintech assets"],
+        "riskNotes": "Regulatory risk, issuer/counterparty risk, valuation and liquidity risk.",
+        "strategyRole": "Equity-like RealFi exposure (pending deployment). Flag as announced."
+      }
+    ],
+    "vaults": [
+      {
+        "name": "Ember",
+        "type": "vault-aggregator",
+        "tags": ["Vault"],
+        "description": "Structured-vault platform tokenizing yield/fund strategies.",
+        "riskLevel": "medium",
+        "deploymentStatus": "not-on-pharos",
+        "deploymentNote": "Ember is live on Sui (and announced for Solana/EVM); no Pharos deployment as of 2026-06-05.",
+        "docs": "https://learn.ember.so",
+        "features": ["auto-managed vaults", "strategy tokenization"],
+        "riskNotes": "Strategy-contract risk, composability risk, fee drag.",
+        "strategyRole": "Hands-off yield once on Pharos. Currently Sui-only — do not route Pharos capital here."
+      }
+    ],
+    "staking": [
+      {
+        "name": "Native PROS Staking",
+        "type": "native-staking",
+        "deploymentStatus": "mainnet-verified",
+        "description": "Stake PROS to help secure the network and earn staking rewards.",
+        "riskLevel": "low",
+        "features": ["native staking", "rewards", "network security"],
+        "riskNotes": "Slashing risk (if applicable), lock-up periods, opportunity cost.",
+        "strategyRole": "Base layer for any strategy holding PROS — earn yield on native holdings or the gas buffer."
+      },
+      {
+        "name": "Faroo Liquid Staking",
+        "type": "liquid-staking",
+        "deploymentStatus": "testnet-only",
+        "deploymentNote": "stPROS live on Pharos testnet (688689); mainnet 'Coming Soon'.",
+        "description": "Stake PROS and receive a liquid staking token (stPROS) usable across Pharos DeFi.",
+        "riskLevel": "low-medium",
+        "features": ["liquid staking token", "DeFi composability", "RWA yield"],
+        "riskNotes": "Smart contract risk, peg-deviation risk on stPROS.",
+        "strategyRole": "Capital-efficient alternative to native staking once mainnet-live."
+      }
+    ],
+    "bridges": [
+      {
+        "name": "Circle CCTP V2",
+        "asset": "USDC",
+        "method": "burn-and-mint",
+        "tags": ["StableCoin", "Bridge"],
+        "riskLevel": "low",
+        "deploymentStatus": "mainnet-verified",
+        "pharosCctpDomain": 31,
+        "contractsSource": "https://developers.circle.com/cctp/evm-smart-contracts",
+        "contractsNote": "TokenMessengerV2/MessageTransmitterV2 are Circle's cross-chain-universal addresses (same on most EVM chains); the Pharos-specific identifier is CCTP domain 31.",
+        "contracts": [
+          { "name": "TokenMessengerV2", "address": "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d" },
+          { "name": "MessageTransmitterV2", "address": "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64" }
+        ],
+        "supportedChains": ["ethereum", "base", "arbitrum", "optimism", "polygon", "avalanche", "bsc"],
+        "speedNotes": "Fast Transfer: seconds to minutes. Standard: 5-20 min.",
+        "strategyRole": "Primary native route for bringing USDC capital onto Pharos from other chains."
+      },
+      {
+        "name": "Chainlink CCIP",
+        "asset": "multi-asset / messaging",
+        "method": "burn-and-mint / lock-and-release",
+        "tags": ["Bridge", "Oracle"],
+        "riskLevel": "low",
+        "deploymentStatus": "mainnet-verified",
+        "chainSelector": "7801139999541420232",
+        "feeTokens": ["LINK", "WPROS"],
+        "contractsSource": "https://docs.chain.link/ccip/directory/mainnet",
+        "contracts": [
+          { "name": "Router", "address": "0x4e52dD94e9BCfeFE3C78153bDfB0AB1d30687297" },
+          { "name": "ARM/RMN Proxy", "address": "0xF4486d70EBED800204898Ec99C812661551471dC" },
+          { "name": "RegistryModuleOwnerCustom", "address": "0xE27dd9BF01B55ce6803c0d81386A04212c718b95" },
+          { "name": "TokenAdminRegistry", "address": "0xB79791184973589c38e114D43Eb8E4588C283A18" }
+        ],
+        "supportedChains": ["base", "ethereum"],
+        "speedNotes": "5-20 minutes.",
+        "strategyRole": "Canonical cross-chain infrastructure on Pharos for transfers and messaging."
+      },
+      {
+        "name": "LayerZero",
+        "asset": "multi-asset / messaging",
+        "method": "omnichain-messaging",
+        "tags": ["Bridge"],
+        "riskLevel": "low-medium",
+        "deploymentStatus": "mainnet-verified",
+        "eid": 30407,
+        "contractsSource": "https://docs.layerzero.network/v2/deployments/deployed-contracts",
+        "contracts": [
+          { "name": "EndpointV2", "address": "0x6F475642a6e85809B1c36Fa62763669b1b48DD5B" },
+          { "name": "SendUln302", "address": "0xC39161c743D0307EB9BCc9FEF03eeb9Dc4802de7" },
+          { "name": "ReceiveUln302", "address": "0xe1844c5D63a9543023008D332Bd3d2e6f1FE1043" },
+          { "name": "Executor", "address": "0x4208D6E27538189bB48E603D6123A94b8Abe0A0b" }
+        ],
+        "description": "Omnichain interoperability protocol for lightweight message passing across chains.",
+        "speedNotes": "Minutes, varies by route.",
+        "strategyRole": "General omnichain route for assets/messages not covered by CCTP or CCIP."
+      },
+      {
+        "name": "LI.FI",
+        "asset": "multi-asset",
+        "method": "bridge-aggregation",
+        "tags": ["Bridge"],
+        "riskLevel": "low-medium",
+        "deploymentStatus": "mainnet-verified",
+        "contractsSource": "https://docs.li.fi/smart-contracts/deployments-contract-addresses",
+        "contractsNote": "Pharos diamond differs from the common 0x1231DEB6 diamond used on most chains.",
+        "contracts": [
+          { "name": "LiFiDiamond (router)", "address": "0xFf70F4A1d11995621854F3692acF286d8aCd04b2" },
+          { "name": "Permit2Proxy", "address": "0x36C800D4472fBb888D034Aa74778f481aEE01FEc" }
+        ],
+        "description": "Bridge aggregation protocol with DEX connectivity and cross-chain messaging.",
+        "speedNotes": "Varies by aggregated route.",
+        "strategyRole": "Best-route bridge aggregation for multi-step pipelines."
+      },
+      {
+        "name": "Jumper",
+        "asset": "multi-asset",
+        "method": "bridge-aggregation",
+        "tags": ["Bridge"],
+        "riskLevel": "low-medium",
+        "deploymentStatus": "mainnet-verified",
+        "deploymentNote": "LI.FI-powered UI; routes through the LI.FI diamond above.",
+        "description": "LI.FI-powered cross-chain swap and bridge interface aggregating liquidity across major chains.",
+        "strategyRole": "User-facing cross-chain swap+bridge UI on top of LI.FI routing."
+      },
+      {
+        "name": "InterPort",
+        "asset": "multi-asset",
+        "method": "cross-chain-swap-bridge",
+        "tags": ["Bridge"],
+        "riskLevel": "low-medium",
+        "deploymentStatus": "not-on-pharos",
+        "deploymentNote": "InterPort's own site and docs 'Supported Chains' list (77 chains) do NOT include Pharos, and its known router address returns 0x on Pharos mainnet. No evidence of a Pharos deployment despite being listed in the Pharos directory.",
+        "docs": "https://docs.interport.fi/",
+        "description": "Cross-chain swaps and bridging aggregator.",
+        "strategyRole": "Potential pipeline route — unverified on Pharos; do not rely on it yet."
+      }
+    ],
+    "oracles": [
+      {
+        "name": "Chainlink",
+        "type": "oracle",
+        "tags": ["Oracle", "Bridge"],
+        "description": "Oracle infrastructure powering DeFi. On Pharos it provides CCIP and Data Streams (pull-based price oracle) for tokenized RWA markets.",
+        "riskLevel": "low",
+        "deploymentStatus": "mainnet-verified",
+        "deploymentNote": "Pharos uses Chainlink Data Streams (pull oracle), not classic on-chain Data Feed aggregators; individual feed addresses were not published as discrete contracts.",
+        "features": ["data streams", "CCIP interoperability"],
+        "strategyRole": "Reference oracle for valuing positions and assessing oracle risk of dependent protocols."
+      },
+      {
+        "name": "Supra",
+        "type": "oracle",
+        "tags": ["Oracle"],
+        "description": "MultiVM oracle and data infrastructure (pull-based price feeds).",
+        "riskLevel": "low",
+        "deploymentStatus": "mainnet-verified",
+        "contractsSource": "https://docs.supra.com/oracles/data-feeds/pull-oracle/networks",
+        "contracts": [
+          { "name": "Pull Contract", "address": "0x16f70cAD28dd621b0072B5A8a8c392970E87C3dD" },
+          { "name": "Storage Contract", "address": "0x58e158c74DF7Ad6396C0dcbadc4878faC9e93d57" }
+        ],
+        "features": ["price feeds", "VRF", "cross-chain data"],
+        "strategyRole": "Alternative oracle source; cross-check feeds for protocols depending on price data."
+      }
+    ],
+    "governance": [
+      {
+        "name": "Pharos Protocol Governance",
+        "type": "governance",
+        "deploymentStatus": "announced",
+        "description": "On-chain governance for Pharos protocol decisions (proposals, voting, delegation). Confirm the active governance venue and contracts on official Pharos channels before acting.",
+        "riskLevel": "low",
+        "features": ["proposals", "voting", "delegation"],
+        "riskNotes": "Governance attack risk, low-participation risk, time-sensitive proposals.",
+        "strategyRole": "PROS holders participate to influence decisions affecting their positions. Confirm live governance details before building a governance plan."
+      }
+    ]
+  },
+  "infrastructure": {
+    "wallets": [
+      { "name": "Safe", "category": "Multisig", "description": "Smart contract wallet for secure asset management with multisig and modular access controls.", "strategyRole": "Recommended custody layer for treasury strategies requiring multi-sig approval." },
+      { "name": "Fordefi", "category": "MPC", "description": "Institutional MPC wallet and security platform for cross-chain interaction.", "strategyRole": "Institutional-grade key management for treasury and large-capital strategies." },
+      { "name": "OKX Wallet", "category": "Wallet", "description": "Multi-purpose self-custody crypto wallet." },
+      { "name": "OneKey", "category": "Wallet", "description": "Open-source self-custody wallet." },
+      { "name": "TopNod", "category": "Wallet", "description": "Self-custody wallet for managing RWA and other digital assets." },
+      { "name": "KuCoin Wallet", "category": "Wallet", "description": "Web3 wallet for on-chain activity." }
+    ],
+    "custody": [
+      { "name": "Anchorage", "category": "Custodian", "description": "Institutional digital-asset infrastructure: custody, staking, governance, auditing, trading.", "strategyRole": "Qualified custodian option for institutional treasury strategies." }
+    ],
+    "onOffRamp": [
+      { "name": "Alchemy Pay", "category": "On/Off Ramp", "description": "Payment provider connecting fiat and crypto.", "strategyRole": "Fiat entry/exit for onboarding strategies." }
+    ],
+    "security": [
+      { "name": "OpenZeppelin", "category": "Security", "description": "Crypto cybersecurity technology, audits, and contract standards." },
+      { "name": "Zellic", "category": "Security", "description": "Blockchain security audit and consulting company." },
+      { "name": "Hypernative", "category": "Security", "description": "Real-time protection detecting zero-day, economic, and governance threats." },
+      { "name": "ExVul Security", "category": "Security", "description": "Smart contract and protocol audits, wallet audits, penetration testing." },
+      { "name": "TRM", "category": "KYT", "description": "Crypto compliance and risk management tools." }
+    ],
+    "data": [
+      { "name": "Pharosverse", "category": "Navigator", "description": "Ecosystem hub for insights, projects, and community." },
+      { "name": "Trusta Labs", "category": "Data Analytics", "description": "Web3 security and analytics for user reputation and risk." },
+      { "name": "Hemera", "category": "Block Explorer", "description": "Account-centric indexing network / explorer." },
+      { "name": "GoldSky", "category": "Indexer", "description": "Fast, scalable blockchain indexing." }
+    ],
+    "identity": [
+      { "name": "PNS", "category": "DID", "description": "Pharos Name Service — official domain naming for Pharos." },
+      { "name": "ZNS Connect", "category": "DID", "description": "Multi-chain domain identity layer." }
+    ]
+  },
+  "nft": [
+    {
+      "name": "Grandline",
+      "type": "nft-marketplace",
+      "tags": ["NFT"],
+      "description": "Native platform for launching and trading NFTs on Pharos.",
+      "riskLevel": "medium",
+      "deploymentStatus": "address-unverified",
+      "deploymentNote": "A dedicated mainnet app (app.grandline.world, labeled 'Mainnet') exists but was unreachable (Cloudflare origin DNS error) during verification, so no marketplace contract address could be confirmed on-chain.",
+      "strategyRole": "Venue for NFT strategy steps; pairs with an NFT mint/collection-launch action command."
+    }
+  ],
+  "riskProfiles": {
+    "conservative": { "stableReserve": 0.70, "yieldAllocation": 0.20, "growthAllocation": 0.00, "gasBuffer": 0.10 },
+    "balanced": { "stableReserve": 0.40, "yieldAllocation": 0.35, "growthAllocation": 0.15, "gasBuffer": 0.10 },
+    "aggressive": { "stableReserve": 0.15, "yieldAllocation": 0.35, "growthAllocation": 0.40, "gasBuffer": 0.10 }
+  },
+  "strategyTypes": [
+    {
+      "id": "conservative-yield",
+      "name": "Conservative Yield",
+      "triggers": ["safe", "low-risk", "conservative", "stable", "preserve capital"],
+      "description": "Capital preservation with modest yield. Mostly stable reserve, small yield allocation.",
+      "suggestedVenues": ["Morpho", "TermMax", "Native PROS Staking"]
+    },
+    {
+      "id": "ecosystem-onboarding",
+      "name": "Ecosystem Onboarding",
+      "triggers": ["new to Pharos", "get started", "enter ecosystem", "onboard", "first time"],
+      "description": "Guided entry into Pharos: wallet setup, funding, gas prep, first safe interactions.",
+      "suggestedVenues": ["Alchemy Pay", "Circle CCTP V2", "Native PROS Staking", "Morpho"]
+    },
+    {
+      "id": "treasury-management",
+      "name": "Treasury Management",
+      "triggers": ["treasury", "project funds", "operating reserve", "organization", "team funds"],
+      "description": "Structured capital management for projects: operating reserve, yield, growth, governance.",
+      "suggestedVenues": ["Safe", "Fordefi", "Morpho", "TermMax", "Anchorage"]
+    },
+    {
+      "id": "realfi-exposure",
+      "name": "RealFi Exposure",
+      "triggers": ["realfi", "real world", "rwa", "tokenized", "real-world assets"],
+      "description": "Exposure to tokenized financial products and RealFi vaults on Pharos.",
+      "suggestedVenues": ["AquaFlux", "Zona", "R25", "Asseto"]
+    },
+    {
+      "id": "liquidity-deployment",
+      "name": "Liquidity Deployment",
+      "triggers": ["liquidity", "lp", "provide liquidity", "market making", "pool"],
+      "description": "Strategic liquidity provision: pool selection, concentration, IL management.",
+      "suggestedVenues": ["AquaFlux", "Faroswap"]
+    },
+    {
+      "id": "governance-strategy",
+      "name": "Governance Strategy",
+      "triggers": ["governance", "vote", "dao", "proposal", "voting power", "delegate"],
+      "description": "Governance participation: voting power assessment, proposal analysis, timing.",
+      "suggestedVenues": ["Pharos Protocol Governance"]
+    },
+    {
+      "id": "multi-step-pipeline",
+      "name": "Multi-Step Pipeline",
+      "triggers": ["bridge then", "swap then", "stake after", "pipeline", "workflow", "sequence"],
+      "description": "Multi-step onchain workflow: route planning, dependency mapping, fallback at each stage.",
+      "suggestedVenues": ["Circle CCTP V2", "Chainlink CCIP", "LI.FI", "AquaFlux", "Morpho"]
+    },
+    {
+      "id": "portfolio-rebalance",
+      "name": "Portfolio Rebalance",
+      "triggers": ["rebalance", "reallocate", "adjust portfolio", "shift allocation", "rebalance portfolio"],
+      "description": "Adjust existing positions to target allocation with minimal transaction cost.",
+      "suggestedVenues": ["AquaFlux", "Morpho", "Zona"]
+    }
+  ],
+  "riskClassification": {
+    "bands": [
+      { "label": "Very Low", "range": [1, 2], "criteria": "Audited, battle-tested, high TVL, no lock-up" },
+      { "label": "Low", "range": [3, 4], "criteria": "Audited, reasonable TVL, short lock-up" },
+      { "label": "Medium", "range": [5, 6], "criteria": "Audited or partially audited, moderate TVL" },
+      { "label": "High", "range": [7, 8], "criteria": "Unaudited or new, low TVL, long lock-up" },
+      { "label": "Very High", "range": [9, 10], "criteria": "No audit, very low TVL, significant lock-up" }
+    ]
+  },
+  "scoreWeights": {
+    "riskAvoidance": 0.35,
+    "simplicity": 0.15,
+    "capitalEfficiency": 0.35,
+    "lowMaintenance": 0.15
+  }
+}

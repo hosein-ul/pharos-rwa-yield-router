@@ -1,11 +1,12 @@
-# Yield Scan — Reference
+# Yield Scan — Reference (v0.2.0, mainnet)
 
-All operations are read-only. No private key required.
+All operations are read-only. Default network: Pacific Mainnet (chain 1672).
 
-> **Setup**: Load network config before any command:
+> **Setup**:
 > ```bash
-> RPC=$(jq -r '.networks[] | select(.name=="atlantic-testnet") | .rpcUrl' assets/networks.json)
+> RPC=$(jq -r '.networks[] | select(.name=="mainnet") | .rpcUrl' assets/networks.json)
 > BLOCK=$(cast block-number --rpc-url $RPC)
+> USDC=$(jq -r '."mainnet"[] | select(.symbol=="USDC") | .address' assets/tokens.json)
 > ```
 
 ---
@@ -13,331 +14,275 @@ All operations are read-only. No private key required.
 ## Table of Contents
 1. [Full Scan](#full-scan)
 2. [Price Lookup](#price-lookup)
-3. [ELFi APY](#elfi-apy)
-4. [Morpho APY](#morpho-apy)
-5. [Faroo APY](#faroo-apy)
-6. [TVL Query](#tvl-query)
-7. [Projected Return](#projected-return)
+3. [Morpho APY](#morpho-apy)
+4. [TermMax APY](#termmax-apy)
+5. [AquaFlux APY](#aquaflux-apy)
+6. [Zona APY](#zona-apy)
+7. [R25 Axil APY](#r25-apy)
+8. [Native PROS Staking](#native-staking)
+9. [Projected Return](#projected-return)
 
 ---
 
 ## Full Scan
 
-Run all protocol queries, skip any that are unavailable, rank by risk-adjusted APY.
-
-### Step-by-step
-
 ```
-1. Load RPC from assets/networks.json
-2. Record current block with: cast block-number --rpc-url $RPC
-3. For each protocol in assets/protocols.json:
-   a. Skip if address contains "PLACEHOLDER"
-   b. Read APY using the appropriate method (see sections below)
-   c. Read TVL (see TVL Query)
-   d. Apply risk multiplier from assets/risk-model.md
-   e. Calculate risk_adjusted_apy = nominal_apy × multiplier
-4. Sort available protocols by risk_adjusted_apy (descending)
-5. Apply user filters (asset, min deposit, risk tolerance, liquidity)
-6. Present ranked table and top recommendation
+1. Read assets/protocols.json — iterate only entries with status="DEPLOYED"
+2. For each protocol:
+   a. Read APY using the method documented per protocol below
+   b. Read TVL (totalAssets() for ERC-4626; protocol-specific for others)
+   c. risk_adjusted_apy = nominal_apy × risk_multiplier (from protocols.json)
+3. Read USD prices for all relevant tokens from Chainlink (see Price Lookup)
+4. Apply user filters (asset, min deposit, risk tolerance, lockup)
+5. Sort by risk_adjusted_apy descending
+6. Present ranked table + top recommendation + projected return
 ```
 
 ---
 
 ## Price Lookup
 
-Reads live USD prices from Chainlink Push Engine oracles deployed on Pharos.
-
-### Command Template
-
 ```bash
-FEED=$(jq -r '."atlantic-testnet".feeds."<PAIR>"' assets/oracles.json)
+FEED=$(jq -r '."mainnet".feeds."<PAIR>"' assets/oracles.json)
 cast call $FEED "latestAnswer()(int256)" --rpc-url $RPC
 ```
 
-### Available Pairs (Atlantic Testnet)
+**Pacific Mainnet feeds** (Chainlink Push Engine, 18 decimals):
 
 | Pair | Feed Address |
 |------|-------------|
-| PROS/USD | `0x67488Fac9Bc4174a53a485b11F2066498Cd34b3A` |
-| ETH/USD  | `0xCd47D1843f3D6313836303fE1434BA26D257d500` |
-| BTC/USD  | `0x82d0e03ea6d94120B92EA4Ea236DcFA273D42994` |
-| USDC/USD | `0xDF6afcf662345Ea29ceACa6DA06141d828c516EA` |
-| USDT/USD | `0x2f7796B346d01a3f2264Ff0D93dDdFF8680b8B66` |
-| WBTC/USD | `0x6F24f8bDeF2870aCa886fb3Fbc04919B0B46F993` |
+| PROS/USD | `0x9356C87a48F913d11C87a0d4b8cD16CD04624BF3` |
+| ETH/USD  | `0x092ff0175Be8B2e83Ca5740d3EB13C6225901fa7` |
+| BTC/USD  | `0x6BFcd14b164de6c8C4dA2d065d511055A589EB20` |
+| USDC/USD | `0x8d08eA83A55ad1e805b5660F5eC76C99C6aF5eaf` |
+| USDT/USD | `0x84B06e38C70DD1f0039bA25E017CAe7cFcDE53b0` |
 
-### Output Parsing
-
-- Result is `int256` with **18 decimal places**.
-- `price_usd = raw_result / 1e18`
-- Example: raw `1800000000000000000000` → `$1800.00`
-
-### Error Handling
-
-| Error | Cause | Action |
-|-------|-------|--------|
-| Empty result | Feed contract unreachable | Skip USD conversion, show native amounts only |
-| `execution reverted` | Wrong feed address | Check assets/oracles.json for the correct address |
-
-### Agent Guidelines
-
-1. Always show timestamp or block number alongside prices to indicate freshness.
-2. For native PHRS prices on testnet, use the PROS/USD feed (same asset, different network name).
-3. Round USD values to 2 decimal places for display.
-
----
-
-## ELFi APY
-
-ELFi is an Aave V3 fork. Read the supply APY from the lending pool's reserve data.
-
-### Prerequisites
-
-Load the ELFi pool address:
-```bash
-ELFI_POOL=$(jq -r '."atlantic-testnet".elfi.pools.lending_pool' assets/protocols.json)
-USDC_ADDR=$(jq -r '."atlantic-testnet"[] | select(.symbol=="USDC") | .address' assets/tokens.json)
-```
-
-If `ELFI_POOL` contains "PLACEHOLDER", skip this protocol and note it as unavailable.
-
-### Step 1 — Read reserve data (Aave V3 pattern)
-
-```bash
-cast call $ELFI_POOL \
-  "getReserveData(address)((uint256,uint128,uint128,uint128,uint128,uint128,uint40,uint16,address,address,address,address,uint128,uint128,uint128))" \
-  $USDC_ADDR \
-  --rpc-url $RPC
-```
-
-### Output Parsing
-
-The return tuple's 4th field (index 3, 0-based) is the `liquidityRate` in RAY units (1e27):
-
-```
-tuple = (config, liquidityIndex, variableBorrowIndex, currentLiquidityRate, ...)
-currentLiquidityRate = tuple[3]  (uint128, in RAY = 1e27)
-```
-
-Convert to APY:
-```
-rate_per_second = liquidityRate / 1e27
-apy = (1 + rate_per_second / 31536000)^31536000 - 1  # compound annually
-apy_pct = apy * 100
-```
-
-### Fallback — Try simpler supply rate function
-
-```bash
-cast call $ELFI_POOL \
-  "getSupplyRate(address)(uint256)" \
-  $USDC_ADDR \
-  --rpc-url $RPC
-```
-
-Convert: `rate / 1e27 → decimal → compound → %`
-
-### Error Handling
-
-| Error | Cause | Action |
-|-------|-------|--------|
-| `execution reverted` | USDC not listed as a reserve | Try with USDT address |
-| Empty result | Pool address wrong or not deployed | Mark ELFi as "unavailable" |
-| Tuple parse fails | ABI mismatch (different Aave version) | Try fallback `getSupplyRate` |
-
-### Agent Guidelines
-
-1. Try the full `getReserveData` call first.
-2. On failure, try `getSupplyRate`.
-3. On both failing, mark ELFi as "data unavailable" — do not estimate.
-4. Show the liquidityRate in both raw RAY and converted APY%.
-5. Also query TVL for the USDC reserve (see TVL Query section).
+Parse: `price_usd = raw_int / 1e18`.
 
 ---
 
 ## Morpho APY
 
-Morpho vaults implement ERC-4626. APY is computed from price-per-share change over time.
+Pharos Morpho deployment is at `0x18573fA18fd17dDfD790B4a5B5b2977aad3b4Efb` (DIFFERENT from canonical).
 
-### Prerequisites
+### Discover active markets
 
-```bash
-MORPHO_VAULT=$(jq -r '."atlantic-testnet".morpho.vaults.usdc_vault' assets/protocols.json)
-```
-
-If `MORPHO_VAULT` contains "PLACEHOLDER", skip and note unavailable.
-
-### Step 1 — Read current share price
+Morpho Blue uses `bytes32` marketId derived from market params. Active markets are emitted via
+`CreateMarket` events. To enumerate:
 
 ```bash
-# Total assets in the vault (in USDC, 6 decimals)
-cast call $MORPHO_VAULT "totalAssets()(uint256)" --rpc-url $RPC
+MORPHO=$(jq -r '."mainnet".morpho.contracts.morpho_blue' assets/protocols.json)
 
-# Total shares outstanding (in vault token, 18 decimals)
-cast call $MORPHO_VAULT "totalSupply()(uint256)" --rpc-url $RPC
-
-# Price per share: preview how much USDC 1e18 shares redeem for
-cast call $MORPHO_VAULT "previewRedeem(uint256)(uint256)" 1000000000000000000 --rpc-url $RPC
+# Get all CreateMarket events
+cast logs --from-block 0 --to-block latest \
+  --address $MORPHO \
+  "CreateMarket(bytes32,(address,address,address,address,uint256))" \
+  --rpc-url $RPC
 ```
 
-### Output Parsing
+### Read market state and compute APY
 
-```
-price_per_share = previewRedeem(1e18) / 1e6   # USDC has 6 decimals
-tvl_usdc = totalAssets / 1e6
-```
-
-### APY Calculation Limitation
-
-ERC-4626 APY requires **two price snapshots** separated by time:
-```
-apy = (price_now / price_then)^(365 / days_elapsed) - 1
+For each active marketId:
+```bash
+cast call $MORPHO \
+  "market(bytes32)((uint128,uint128,uint128,uint128,uint128,uint128))" \
+  $MARKET_ID --rpc-url $RPC
+# Returns: (totalSupplyAssets, totalSupplyShares, totalBorrowAssets, totalBorrowShares,
+#           lastUpdate, fee)
 ```
 
-On first call, you only have one snapshot. Options:
-1. Show the current price-per-share and note "APY calculation requires a second measurement".
-2. If The Graph or an indexer is available, query historical prices.
-3. If the vault has a `totalAssets()` that reflects accrued interest, estimate from block timestamps.
+Then query IRM for current rate:
+```bash
+IRM=$(jq -r '."mainnet".morpho.contracts.adaptive_curve_irm' assets/protocols.json)
+cast call $IRM "borrowRateView((bytes32,uint128,uint128,uint128,uint128,uint128,uint128))(uint256)" $MARKET_PARAMS --rpc-url $RPC
+# Returns rate per second, scaled by 1e18
+```
 
-### Fallback — Check for explicit APY function
+Convert to APY:
+```
+utilization = totalBorrowAssets / totalSupplyAssets
+supply_rate = borrow_rate × utilization × (1 - fee/1e18)
+apy = (1 + supply_rate / 1e18) ^ (365 × 86400) - 1
+apy_pct = apy × 100
+```
+
+### Fallback — use Morpho's API if on-chain enumeration is too slow
 
 ```bash
-# Some vaults expose APY directly
-cast call $MORPHO_VAULT "apr()(uint256)" --rpc-url $RPC
-cast call $MORPHO_VAULT "currentApy()(uint256)" --rpc-url $RPC
+curl -s "https://blue-api.morpho.org/graphql" \
+  -X POST -H "Content-Type: application/json" \
+  -d '{"query":"{ markets(where: { chainId_in: [1672] }) { items { uniqueKey state { supplyApy borrowApy utilization } } } }"}'
 ```
 
-### Error Handling
-
-| Error | Cause | Action |
-|-------|-------|--------|
-| Empty `totalAssets` | Vault not deployed or wrong address | Mark Morpho as unavailable |
-| Division by zero | Vault has no shares yet (empty) | Show TVL=0, APY=N/A |
-
-### Agent Guidelines
-
-1. Always report current TVL even if APY cannot be computed.
-2. If APY requires two snapshots, clearly say so and offer to check again later.
-3. Show the price-per-share as a progress metric (e.g., "1 share = 1.0237 USDC").
+Note: as of 2026-06-13 Morpho API may not yet support chainId 1672. Verify before using.
 
 ---
 
-## Faroo APY
+## TermMax APY
 
-Faroo is a liquid staking protocol for PHRS. Users stake PHRS and receive stPHRS.
+Fixed-rate lending. Each market has a defined fixed rate, not a floating APY.
 
-### Prerequisites
+### Discover active markets
 
 ```bash
-FAROO=$(jq -r '."atlantic-testnet".faroo.contracts.staking' assets/protocols.json)
+TERMMAX_FACTORY=$(jq -r '."mainnet".termmax.contracts.factory_v2' assets/protocols.json)
+VIEWER=$(jq -r '."mainnet".termmax.contracts.market_viewer' assets/protocols.json)
+
+# MarketViewer exposes view functions for all markets
+cast call $VIEWER "getAllMarkets()(address[])" --rpc-url $RPC
 ```
 
-If `FAROO` contains "PLACEHOLDER", skip and note unavailable.
+### Read per-market fixed rate
 
-### Step 1 — Try common APY getter methods
-
-Try each in order until one succeeds:
-
+For each market address:
 ```bash
-# Method 1 — direct APY in basis points or percentage
-cast call $FAROO "getAPY()(uint256)" --rpc-url $RPC
-
-# Method 2 — annual staking APY
-cast call $FAROO "getStakingAPY()(uint256)" --rpc-url $RPC
-
-# Method 3 — reward rate per second (needs manual annualization)
-cast call $FAROO "rewardRate()(uint256)" --rpc-url $RPC
-
-# Method 4 — annualized yield
-cast call $FAROO "annualizedYield()(uint256)" --rpc-url $RPC
+cast call $MARKET "fixedRate()(uint256)" --rpc-url $RPC
+cast call $MARKET "maturity()(uint256)" --rpc-url $RPC
+cast call $MARKET "underlying()(address)" --rpc-url $RPC
+cast call $MARKET "totalAssets()(uint256)" --rpc-url $RPC
 ```
 
-### Output Parsing
+Convert: `apy_pct = fixedRate / 1e16` (assuming WAD scaling, 1e18 = 100%).
 
-The return encoding depends on the contract. Common patterns:
+Verify scaling with a known market — try `fixedRate / 1e16` first; if result is implausible
+(>200%), try `fixedRate / 1e18 × 100`.
 
-| Raw value range | Interpretation | Conversion |
-|-----------------|---------------|-----------|
-| 100–10000 | Basis points | `apy_pct = raw / 100` |
-| 1e16–1e20 | 18-decimal percentage | `apy_pct = raw / 1e18 * 100` |
-| 1e25–1e27 | RAY-encoded rate | `apy_pct = raw / 1e25` |
+---
 
-Try each interpretation and show whichever produces a plausible result (0–200%).
+## AquaFlux APY
 
-### Step 2 — Read total staked (TVL)
+Tri-token model: Yield Token (Y) / Principal Token (P) / Collateral Token (C). Each tranche
+has different return characteristics.
 
 ```bash
-cast call $FAROO "totalAssets()(uint256)" --rpc-url $RPC
+CORE=$(jq -r '."mainnet".aquaflux.contracts.core_proxy' assets/protocols.json)
+FACTORY=$(jq -r '."mainnet".aquaflux.contracts.token_factory' assets/protocols.json)
+
+# Enumerate all token sets
+cast call $FACTORY "getAllTokenSets()(address[])" --rpc-url $RPC
 # or
-cast call $FAROO "totalSupply()(uint256)" --rpc-url $RPC
+cast call $CORE "getAllPositions()(...)" --rpc-url $RPC
 ```
 
-### Error Handling
+For each Y/P/C set:
+```bash
+# Read tranche yield from oracle or position state
+cast call $CORE "getYieldTokenAPY(address)(uint256)" $Y_TOKEN --rpc-url $RPC
+cast call $CORE "getPositionInfo(address)((...))" $POSITION --rpc-url $RPC
+```
 
-| Error | Cause | Action |
-|-------|-------|--------|
-| All 4 APY methods fail | Contract not deployed or ABI differs | Mark Faroo as unavailable |
-| Result is 0 | Staking not yet active | Show 0% APY with note |
+If specific getter unavailable, fall back to ERC-4626 pattern on the Y token if it implements it.
 
-### Agent Guidelines
-
-1. Try all 4 APY methods before marking unavailable.
-2. Show raw value and interpreted APY so user can verify.
-3. Display the exchange rate if available: `cast call $FAROO "exchangeRate()(uint256)"`.
+**Note**: AquaFlux ABI not fully documented publicly. Read the AquaFlux Core contract on
+explorer to identify view functions, or fall back to API:
+```bash
+curl -s "https://api.aquaflux.pro/tranches?chain=1672"
+```
 
 ---
 
-## TVL Query
+## Zona APY
 
-Read total value locked in a protocol.
-
-### For Aave V3 / ELFi pools
+Zona is an Aave V3 fork. Standard Aave reading pattern.
 
 ```bash
-# Total supplied (all asset types combined)
-cast call $ELFI_POOL "totalDeposits()(uint256)" --rpc-url $RPC
-# or per-asset
-cast call $ELFI_POOL "getReserveData(address)(...)" $USDC_ADDR --rpc-url $RPC
-# Read aTokenAddress from tuple, then query its totalSupply
+POOL=$(jq -r '."mainnet".zona.contracts.pool_proxy' assets/protocols.json)
+DATA_PROVIDER=$(jq -r '."mainnet".zona.contracts.pool_data_provider' assets/protocols.json)
+USDC=$(jq -r '."mainnet"[] | select(.symbol=="USDC") | .address' assets/tokens.json)
+
+# Aave V3 getReserveData returns a long tuple
+cast call $POOL \
+  "getReserveData(address)((uint256,uint128,uint128,uint128,uint128,uint128,uint40,uint16,address,address,address,address,uint128,uint128,uint128))" \
+  $USDC --rpc-url $RPC
 ```
 
-### For ERC-4626 vaults (Morpho)
+Tuple field index 3 (`currentLiquidityRate`) is supply APY in RAY (1e27).
+
+```
+liquidity_rate = rate_ray / 1e27
+apy = (1 + liquidity_rate / (365 × 86400)) ^ (365 × 86400) - 1
+apy_pct = apy × 100
+```
+
+Alternative simpler view (if data provider exposes it):
+```bash
+cast call $DATA_PROVIDER \
+  "getReserveData(address)((uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint40))" \
+  $USDC --rpc-url $RPC
+# liquidityRate is at index 5
+```
+
+---
+
+## R25 Axil APY
+
+R25 vaults are ERC-4626. APY needs two `previewRedeem(1e18)` snapshots over time.
 
 ```bash
-cast call $VAULT "totalAssets()(uint256)" --rpc-url $RPC
+VAULT_7D=$(jq -r '."mainnet".r25_axil.vaults.vrpcw_7day.address' assets/protocols.json)
+VAULT_6M=$(jq -r '."mainnet".r25_axil.vaults.vrpcs_6month.address' assets/protocols.json)
+
+# Current price per share (returns USDC, 6 decimals)
+cast call $VAULT_7D "previewRedeem(uint256)(uint256)" 1000000000000000000 --rpc-url $RPC
+# Total assets in USDC
+cast call $VAULT_7D "totalAssets()(uint256)" --rpc-url $RPC
 ```
 
-Divide by token decimals (USDC = 6, PHRS = 18).
+### Real-time APY (requires snapshot)
 
-### For liquid staking (Faroo)
+```
+pps_now  = previewRedeem(1e18) / 1e6   # USDC has 6 decimals
+pps_then = previously saved snapshot
+days_elapsed = (block_now - block_then) / blocks_per_day
+apy = (pps_now / pps_then) ^ (365 / days_elapsed) - 1
+```
 
+If no historical snapshot exists, fall back to R25's published yield:
 ```bash
-cast call $FAROO "totalAssets()(uint256)" --rpc-url $RPC
+curl -s "https://app.r25.xyz/api/vaults?chain=1672"
 ```
+
+**Lockup disclosure**: ALWAYS tell the user about the lockup before recommending:
+- VRPCW: 7-day withdrawal lock
+- VRPCS: 6-month withdrawal lock
+
+---
+
+## Native Staking
+
+Native PROS staking does not use an ERC-20 contract. Delegation typically goes through a
+precompile or system contract. As of 2026-06-13 the exact contract address/ABI is not
+publicly documented; consult `assets/ecosystem.json` for current Pharos staking guidance.
+
+For now, report Native PROS staking as "DEPLOYED — delegation via Pharos validator UI" and
+do not provide a `cast call` template. Once Pharos publishes the staking precompile, add it.
 
 ---
 
 ## Projected Return
 
-Simple interest calculation for display purposes.
-
-### Formula
-
 ```
 projected_return = principal × (nominal_apy / 100) × (days / 365)
 ```
 
+Use **nominal APY**, not risk-adjusted. Risk-adjusted is for ranking; nominal is the actual
+expected return.
+
 ### Example
 
-User wants to put $5,000 USDC into ELFi T-Bills at 6.8% APY for 90 days:
+$10,000 USDC into TermMax 30d fixed at 5.4%:
 ```
-return = 5000 × (6.8 / 100) × (90 / 365)
-       = 5000 × 0.068 × 0.2466
-       = $83.85 USDC
+return_30d = 10000 × 0.054 × (30 / 365) = $44.38 USDC
 ```
 
-### Agent Guidelines
+---
 
-1. Always use nominal APY for projected return (not risk-adjusted, which is a ranking tool).
-2. Show both the return amount and the final portfolio value (principal + return).
-3. Add a disclaimer that APY is current rate and may change.
-4. If the user specifies a token, show the return in that token and convert to USD using Chainlink.
+## Error Handling
+
+| Error | Action |
+|-------|--------|
+| Protocol RPC call fails | Mark protocol "data unavailable"; continue with others |
+| All protocol reads fail | Report "RPC connectivity issue"; do not fabricate APY |
+| Address contains "COMING_SOON" / "TESTNET_ONLY" | Skip with status note |
+| Unknown ABI / call reverts | Try alternate view function from `_note` field |
+| APY result implausible (negative, >1000%) | Try alternate scaling factor (1e16 vs 1e18 vs 1e27) |

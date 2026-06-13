@@ -13,15 +13,15 @@ between this yield opportunity and a risk-free alternative?**
 
 ## Risk Multipliers
 
-| Asset Class | Multiplier | Protocols | Rationale |
-|-------------|-----------|-----------|-----------|
-| `government_treasury` | **0.95** | ELFi T-Bills | US/AAA sovereign debt. Near-zero default risk. Minor liquidity/duration risk. |
-| `investment_grade` | **0.85** | ELFi IG Bonds | Corporate bonds BBB+ or better. Low default probability. |
-| `real_estate` | **0.80** | ELFi RE Pools | Tokenized property. Illiquidity + market/valuation risk. |
-| `crypto_lending` | **0.70** | Morpho USDC | Crypto-collateralized. Liquidation risk during volatility events. |
-| `native_staking` | **0.50** | Faroo stPHRS | Native token. Price risk is significant — APY denominated in volatile asset. |
-| `private_credit` | **0.60** | (Centrifuge) | Private borrowers. Default risk, less liquid, harder to exit. |
-| `novel_protocol` | **0.40** | Unknown new | No track record. Smart contract risk + underlying risk. |
+| Asset Class | Multiplier | Pharos Protocols | Rationale |
+|-------------|-----------|------------------|-----------|
+| `government_treasury` | **0.95** | (none yet on Pharos) | US/AAA sovereign debt. Near-zero default risk. |
+| `investment_grade` | **0.85** | **TermMax** (fixed-rate) | Predictable returns, audited, lockup until maturity. |
+| `real_estate` | **0.80** | **AquaFlux**, **Zona** | Tokenized property/RWA. Tranche or collateral structure adds risk. |
+| `crypto_lending` | **0.70** | **Morpho Blue** | Crypto-collateralized P2P lending. Liquidation risk in volatility. |
+| `private_credit` | **0.60** | **R25 Axil** (7-day, 6-month) | Emerging-market consumer credit. Curated/audited but defaults possible. |
+| `native_staking` | **0.50** | **Native PROS staking**, **Faroo** (when live) | Native token price risk. APY denominated in volatile PROS. |
+| `novel_protocol` | **0.40** | Unknown new | No track record. Smart contract + underlying risk. |
 
 ---
 
