@@ -16,27 +16,37 @@ description: >
   much would I earn in 90 days?", "Axil consumer credit", "AquaFlux tranches", or any question
   about yield, APY, staking, or capital deployment on Pharos.
   This skill is read-only and safe to call at any time.
-version: 0.2.0
+version: 0.3.0
 requires:
   anyBins:
     - cast
 ---
 
-# Pharos RWA Yield Intelligence Router (v0.2.0)
+# Pharos RWA Yield Intelligence Router (v0.3.0)
 
-Scans Pharos's entire yield ecosystem and returns a ranked, risk-adjusted comparison so agents
-can recommend optimal capital deployment. All data is read live from on-chain — no stale estimates,
-no fabricated APYs.
+Scans Pharos's yield ecosystem and returns a ranked, risk-adjusted comparison so agents can
+recommend optimal capital deployment. All data is read live from on-chain — no stale estimates,
+no fabricated APYs. **The skill is HONEST about what's working today** — Pharos mainnet is
+new, and not all listed protocols have active markets yet.
+
+## What Changed in v0.3.0
+
+Following deep activity verification (2026-06-13):
+- **Reality check**: most "deployed" Pharos protocols have zero on-chain activity
+- **R25 Axil**: LIVE — verified $847K USDC TVL on the 7-day vault
+- **Zona**: LIVE — Aave V3 reserves are active, USDC supply rate is readable
+- **Morpho Blue**: deployed but ZERO CreateMarket events — no active markets yet
+- **TermMax**: deployed but ZERO factory events — no vaults exist yet
+- **AquaFlux**: deployed but ABI for APY view functions not in public docs
+- **Native PROS staking**: precompile not at standard slots (0x1000/0x1001/0x0800)
+- **Faroo**: mainnet "coming soon"; testnet stPROS works
 
 ## What Changed in v0.2.0
 
-Following ecosystem verification (2026-06-13):
 - **Removed ELFi** — not deployed on Pharos at all (Arbitrum & Base only)
-- **Removed fake Morpho address** — canonical 0xBBBB... is NOT used; Pharos has a distinct
+- **Removed fake Morpho address** — canonical `0xBBBB...` is NOT used; Pharos has a distinct
   Morpho deployment at `0x18573fA1...`
-- **Added 5 verified mainnet protocols**: Morpho, TermMax, AquaFlux, Zona, R25 (Axil Credit)
-- **Default network changed to `mainnet`** — that's where actual capital lives. Atlantic
-  testnet is kept only for testing (Faroo testnet stPROS).
+- **Default network → `mainnet`** — capital lives there
 
 ## Prerequisites
 
@@ -49,18 +59,22 @@ Following ecosystem verification (2026-06-13):
 4. **Full ecosystem registry** — `assets/ecosystem.json` (cross-reference for context).
 5. No private key required — read-only skill.
 
-## Verified Pharos Mainnet Protocols
+## Pharos Mainnet Protocols — Honest Status
 
-| Protocol | Type | Asset Class | Risk Mult | Status |
-|----------|------|-------------|-----------|--------|
-| **Morpho Blue** | P2P lending | crypto_lending | 0.70 | ✅ DEPLOYED |
-| **TermMax** | Fixed-rate lending | investment_grade | 0.85 | ✅ DEPLOYED |
-| **AquaFlux** | RWA structured (tranched) | real_estate | 0.80 | ✅ DEPLOYED |
-| **Zona** | Aave V3 fork (RWA collateral) | real_estate | 0.80 | ✅ DEPLOYED |
-| **R25 — Axil 7-day** | Consumer credit vault | private_credit | 0.60 | ✅ DEPLOYED |
-| **R25 — Axil 6-month** | Consumer credit vault | private_credit | 0.60 | ✅ DEPLOYED |
-| **Native PROS Staking** | L1 staking | native_staking | 0.50 | ✅ DEPLOYED |
-| Faroo Liquid Staking | Liquid staking | native_staking | 0.50 | ⏳ TESTNET ONLY |
+| Protocol | Asset Class | Risk Mult | Status | Agent Can Read? |
+|----------|-------------|-----------|--------|-----------------|
+| **R25 — Axil 7-day** | private_credit | 0.60 | ✅ ACTIVE ($847K TVL) | ✅ Yes — full ERC-4626 |
+| **R25 — Axil 6-month** | private_credit | 0.60 | ✅ ACTIVE | ✅ Yes — full ERC-4626 |
+| **Zona** | real_estate | 0.80 | ✅ ACTIVE | ✅ Yes — Aave V3 standard |
+| **Faroo (testnet)** | native_staking | 0.50 | ✅ ACTIVE (testnet only) | ✅ Yes — ERC-4626 |
+| **Faroswap** | lp_yield | 0.65 | ✅ ACTIVE | 🟡 Swap quotes via DODO API |
+| **Morpho Blue** | crypto_lending | 0.70 | ⏳ Deployed, NO markets | ❌ Nothing to read yet |
+| **TermMax** | investment_grade | 0.85 | ⏳ Deployed, NO vaults | ❌ Nothing to read yet |
+| **AquaFlux** | real_estate | 0.80 | ⏳ Deployed, ABI gap | ❌ ABI not in public docs |
+| **Native PROS Staking** | native_staking | 0.50 | 🟡 Active, no precompile addr | ❌ Need Pharos staking docs |
+| Faroo (mainnet) | native_staking | 0.50 | ⏳ Coming Soon | ❌ Empty config |
+
+Full per-protocol detail in `assets/protocols.json`.
 
 ## Capability Index
 
@@ -80,22 +94,31 @@ Following ecosystem verification (2026-06-13):
 ## Output Format
 
 ```
-🔍 Pharos Yield Scan — <TIMESTAMP> (block <BLOCK>, mainnet)
+🔍 Pharos Yield Scan — <TIMESTAMP> (block <BLOCK>, mainnet 1672)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Rank  Protocol              Type          Class            APY    Risk-Adj  TVL      Min
-─────────────────────────────────────────────────────────────────────
- #1   TermMax — 30d fixed   fixed-rate    inv. grade      5.4%   4.59%     $4.2M    $10
- #2   Morpho — USDC/WPROS   p2p lending   crypto lending  4.1%   2.87%     $3.8M    $1
- #3   R25 — Axil 7d         consumer cr.  private credit  9.2%   5.52%     $1.1M    $1
- #4   AquaFlux — Y token    structured    real estate     8.0%   6.40%     $850k    $50
- #5   Zona — USDC supply    aave fork     real estate     3.6%   2.88%     $620k    $1
- #6   Native PROS staking   l1 staking    native staking  6.5%   3.25%     —        —
+ACTIVE PROTOCOLS (live data):
+Rank  Protocol              Class            APY    Risk-Adj  TVL      Min   Lockup
+ #1   R25 Axil 7d           private credit   8.5%   5.10%     $847K    $1    7d queue
+ #2   R25 Axil 6m           private credit   11.2%  6.72%     ...      $1    180d
+ #3   Zona USDC supply      real estate      3.6%   2.88%     $620K    $1    none
+ #4   Faroo stPROS (test)   native staking   N/A    —         testnet  —     —
+
+DEPLOYED BUT NOT YET ACTIVE:
+  • Morpho Blue — 0 markets created yet
+  • TermMax — 0 vaults created yet
+  • AquaFlux — ABI not publicly documented yet
+  • Native PROS staking — precompile address not published yet
+  • Faroo (mainnet) — "Coming Soon" per app config
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⭐ Best for <AMOUNT> <ASSET>: <PROTOCOL> @ <RISK_ADJ_APY>%
    Reasoning: <one sentence>
    Projected <DAYS>d return: ~<RETURN> <ASSET>
+   ⚠️ Lockup: <describe>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Data: block <BLOCK> | 4 protocols scanned | 5 not yet active
 ```
+
+**Always show both sections** — users need to know the full landscape, including what's coming.
 
 ## Decision Flow
 
